@@ -2,7 +2,7 @@ from flask import Blueprint
 from core import db
 from core.apis import decorators
 from core.apis.responses import APIResponse
-from core.models.assignments import Assignment
+from core.models.assignments import Assignment, AssignmentStateEnum
 
 from .schema import AssignmentSchema, AssignmentSubmitSchema
 student_assignments_resources = Blueprint('student_assignments_resources', __name__)
@@ -24,7 +24,6 @@ def upsert_assignment(p, incoming_payload):
     """Create or Edit an assignment"""
     assignment = AssignmentSchema().load(incoming_payload)
     assignment.student_id = p.student_id
-
     upserted_assignment = Assignment.upsert(assignment)
     db.session.commit()
     upserted_assignment_dump = AssignmentSchema().dump(upserted_assignment)
@@ -43,6 +42,7 @@ def submit_assignment(p, incoming_payload):
         teacher_id=submit_assignment_payload.teacher_id,
         auth_principal=p
     )
+    submitted_assignment.state = AssignmentStateEnum.SUBMITTED
     db.session.commit()
     submitted_assignment_dump = AssignmentSchema().dump(submitted_assignment)
     return APIResponse.respond(data=submitted_assignment_dump)
